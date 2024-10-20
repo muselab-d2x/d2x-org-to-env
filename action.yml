@@ -51,6 +51,11 @@ runs:
         SCRATCH=$(safe_extract "scratch")
         
         echo "Information extracted successfully."
+        echo "ORG_NAME: ${ORG_NAME}"
+        echo "INSTANCE_URL: ${INSTANCE_URL}"
+        echo "USERNAME: ${USERNAME}"
+        echo "SFDX_ALIAS: ${USERNAME}"
+        
         
         # Set outputs
         echo "org_name=${ORG_NAME}" >> $GITHUB_OUTPUT
@@ -61,7 +66,9 @@ runs:
           echo "Creating/updating GitHub environment..."
           
           # Get SFDX auth URL (sensitive)
-          SFDX_AUTH_URL=$(sf org display --json --verbose -o $SFDX_ALIAS | jq -r '.result.sfdxAuthUrl')
+          sf org list
+          sf org display -o $SFDX_ALIAS
+          SFDX_AUTH_URL=$(sf org display --json --verbose -o $username | jq -r '.result.sfdxAuthUrl')
           
           # Create or update environment
           gh api -X PUT /repos/${{ github.repository }}/environments/${{ inputs.environment-name }} \
