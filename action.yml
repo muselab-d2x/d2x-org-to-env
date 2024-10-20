@@ -96,5 +96,3 @@ runs:
           
           echo "Environment '${{ inputs.environment-name }}' created/updated with necessary variables and secrets."
         fi
-      env:
-        GITHUB_TOKEN: ${{ secrets.github-token }}
