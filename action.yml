@@ -67,8 +67,8 @@ runs:
           
           # Get SFDX auth URL (sensitive)
           sf org list
-          sf org display -o $SFDX_ALIAS
-          SFDX_AUTH_URL=$(sf org display --json --verbose -o $username | jq -r '.result.sfdxAuthUrl')
+          sf org display -o "${SFDX_ALIAS}"
+          SFDX_AUTH_URL=$(sf org display --json --verbose -o "${SFDX_ALIAS}" | jq -r '.result.sfdxAuthUrl')
           
           # Create or update environment
           gh api -X PUT /repos/${{ github.repository }}/environments/${{ inputs.environment-name }} \
