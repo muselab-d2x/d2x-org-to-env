@@ -31,6 +31,8 @@ runs:
     - name: Get and Process Org Info
       id: process-org-info
       shell: bash
+      env:
+        GITHUB_TOKEN: ${secrets.github-token}
       run: |
         set -e
         echo "Starting org info collection..."
