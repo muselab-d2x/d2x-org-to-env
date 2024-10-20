@@ -74,8 +74,7 @@ runs:
           SFDX_AUTH_URL=$(sf org display --json --verbose --target-org "${USERNAME}" | jq -r '.result.sfdxAuthUrl')
           
           # Create or update environment
-          gh api -X PUT /repos/${{ github.repository }}/environments/${{ inputs.environment-name }} \
-            -f wait_timer=0
+          gh api -X PUT /repos/${{ github.repository }}/environments/${{ inputs.environment-name }}
           
           # Set environment variables
           set_env_var() {
