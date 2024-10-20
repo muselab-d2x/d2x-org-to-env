@@ -1,5 +1,5 @@
 name: 'Save Org to GitHub Environment'
-description: 'Collects Salesforce org info and optionally saves it as a GitHub environment'
+description: 'Collects Salesforce org info and saves it as a GitHub environment'
 inputs:
   org-alias:
     description: 'Alias of the Salesforce org'
@@ -29,24 +29,37 @@ runs:
       id: process-org-info
       shell: bash
       run: |
+        set -e
+        echo "Starting org info collection..."
+        
         # Get org info
         ORG_INFO=$(cci org info ${{ inputs.org-alias }} --json)
+        echo "Org info retrieved successfully."
         
-        # Extract non-sensitive information
-        ORG_NAME=$(echo $ORG_INFO | jq -r '.org_name')
-        INSTANCE_URL=$(echo $ORG_INFO | jq -r '.instance_url')
-        USERNAME=$(echo $ORG_INFO | jq -r '.username')
-        SFDX_ALIAS=$(echo $ORG_INFO | jq -r `'.sfdx_alias')
-        ORG_ID=$(echo $ORG_INFO | jq -r '.org_id')
-        ORG_TYPE=$(echo $ORG_INFO | jq -r '.org_type')
-        SCRATCH=$(echo $ORG_INFO | jq -r '.scratch')
+        # Function to safely extract JSON values
+        safe_extract() {
+          echo "$ORG_INFO" | jq -r ".$1 | if type==\"string\" then . else \"\" end" || echo ""
+        }
         
-        # Set non-sensitive outputs
+        # Extract information
+        ORG_NAME=$(safe_extract "org_name")
+        INSTANCE_URL=$(safe_extract "instance_url")
+        USERNAME=$(safe_extract "username")
+        SFDX_ALIAS=$(safe_extract "sfdx_alias")
+        ORG_ID=$(safe_extract "org_id")
+        ORG_TYPE=$(safe_extract "org_type")
+        SCRATCH=$(safe_extract "scratch")
+        
+        echo "Information extracted successfully."
+        
+        # Set outputs
         echo "org_name=${ORG_NAME}" >> $GITHUB_OUTPUT
         echo "instance_url=${INSTANCE_URL}" >> $GITHUB_OUTPUT
         echo "username=${USERNAME}" >> $GITHUB_OUTPUT
         
         if [[ "${{ inputs.create-environment }}" == "true" && -n "${{ inputs.environment-name }}" ]]; then
+          echo "Creating/updating GitHub environment..."
+          
           # Get SFDX auth URL (sensitive)
           SFDX_AUTH_URL=$(sf org display --json --verbose -o $SFDX_ALIAS | jq -r '.result.sfdxAuthUrl')
           
@@ -56,19 +69,17 @@ runs:
             -f wait_timer=0
           
           # Set environment variables
-          gh api -X PUT /repos/${{ github.repository }}/environments/${{ inputs.environment-name }}/variables/INSTANCE_URL \
-            -f name="INSTANCE_URL" -f value="${INSTANCE_URL}"
-          gh api -X PUT /repos/${{ github.repository }}/environments/${{ inputs.environment-name }}/variables/USERNAME \
-            -f name="USERNAME" -f value="${USERNAME}"
-          gh api -X PUT /repos/${{ github.repository }}/environments/${{ inputs.environment-name }}/variables/SFDX_ALIAS \
-            -f name="SFDX_ALIAS" -f value="${SFDX_ALIAS}"
-          gh api -X PUT /repos/${{ github.repository }}/environments/${{ inputs.environment-name }}/variables/ORG_ID \
-            -f name="ORG_ID" -f value="${ORG_ID}"
-          gh api -X PUT /repos/${{ github.repository }}/environments/${{ inputs.environment-name }}/variables/ORG_TYPE \
-            -f name="ORG_TYPE" -f value="${ORG_TYPE}"
-          gh api -X PUT /repos/${{ github.repository }}/environments/${{ inputs.environment-name }}/variables/SCRATCH \
-            -f name="SCRATCH" -f value="${SCRATCH}"
-      
+          set_env_var() {
+            gh api -X PUT /repos/${{ github.repository }}/environments/${{ inputs.environment-name }}/variables/$1 \
+              -f name="$1" -f value="$2"
+          }
+          
+          set_env_var "INSTANCE_URL" "${INSTANCE_URL}"
+          set_env_var "USERNAME" "${USERNAME}"
+          set_env_var "SFDX_ALIAS" "${SFDX_ALIAS}"
+          set_env_var "ORG_ID" "${ORG_ID}"
+          set_env_var "ORG_TYPE" "${ORG_TYPE}"
+          set_env_var "SCRATCH" "${SCRATCH}"
           
           # Set secret
           gh secret set SFDX_AUTH_URL -b"${SFDX_AUTH_URL}" --env "${{ inputs.environment-name }}"
