@@ -22,6 +22,9 @@ outputs:
   username:
     description: 'Username of the Salesforce org'
     value: ${{ steps.process-org-info.outputs.username }}
+secrets:
+  github-token:
+    required: true
 runs:
   using: "composite"
   steps:
@@ -94,4 +97,4 @@ runs:
           echo "Environment '${{ inputs.environment-name }}' created/updated with necessary variables and secrets."
         fi
       env:
-        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_TOKEN: ${{ secrets.github-token }}
