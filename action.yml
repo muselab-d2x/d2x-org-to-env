@@ -12,6 +12,9 @@ inputs:
     description: 'Name of the GitHub environment to create'
     required: false
     default: ''
+  github-token:
+    description: 'The github token to use for creating environments.'
+    required: true
 outputs:
   org_name:
     description: 'Name of the Salesforce org'
@@ -22,9 +25,6 @@ outputs:
   username:
     description: 'Username of the Salesforce org'
     value: ${{ steps.process-org-info.outputs.username }}
-secrets:
-  github-token:
-    required: true
 runs:
   using: "composite"
   steps:
@@ -32,7 +32,7 @@ runs:
       id: process-org-info
       shell: bash
       env:
-        GITHUB_TOKEN: ${secrets.github-token}
+        GITHUB_TOKEN: ${inputs.github-token}
       run: |
         set -e
         echo "Starting org info collection..."
