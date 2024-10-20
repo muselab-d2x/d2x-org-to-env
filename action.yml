@@ -75,7 +75,6 @@ runs:
           
           # Create or update environment
           gh api -X PUT /repos/${{ github.repository }}/environments/${{ inputs.environment-name }} \
-            -f environment_name="${{ inputs.environment-name }}" \
             -f wait_timer=0
           
           # Set environment variables
