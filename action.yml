@@ -12,9 +12,6 @@ inputs:
     description: 'Name of the GitHub environment to create'
     required: false
     default: ''
-  gh-token:
-    description: 'The github token to use for creating environments.'
-    required: true
 outputs:
   org_name:
     description: 'Name of the Salesforce org'
@@ -31,11 +28,11 @@ runs:
     - name: Get and Process Org Info
       id: process-org-info
       shell: bash
-      env:
-        GH_TOKEN: ${inputs.gh-token}
       run: |
         set -e
         echo "Starting org info collection..."
+
+        echo "Using GH_TOKEN: ${GH_TOKEN}"
         
         # Get org info
         ORG_INFO=$(cci org info ${{ inputs.org-alias }} --json)
